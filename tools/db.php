@@ -6,7 +6,7 @@ namespace tools;
 use PDO;
 use PDOException;
 
-class db
+class db extends PDO
 {
     /**
      * @var null|PDO
@@ -17,7 +17,7 @@ class db
     {
         if (is_null(self::$db)) {
             try {
-                $pdo = new PDO(
+                $pdo = new parent(
                     config::get('dsn'),
                     config::get('username'),
                     config::get('password'),

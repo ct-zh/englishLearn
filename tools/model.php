@@ -43,4 +43,9 @@ class model
         }
         return 0;
     }
+
+    public static function db()
+    {
+        return db::getInstance();
+    }
 }
