@@ -19,6 +19,9 @@ class route
     {
         // 加载路由配置
         $this->loadConfig();
+
+        // 问题： 参数只能存放在form data 里面， get请求不能获取参数,
+        // 现在先只用post方法把
         $classPath = self::$route[$_SERVER["REQUEST_METHOD"]][$_SERVER["QUERY_STRING"]] ?? null;
         if ($classPath == null) {
             throw new error("404 NOT FOUND");

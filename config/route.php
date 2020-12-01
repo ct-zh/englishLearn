@@ -2,4 +2,5 @@
 
 use tools\route;
 
-route::addRoute("post", "week", "week@do");
+// 现在先只用post方法把
+route::addRoute("post", "week", "week@daily");
