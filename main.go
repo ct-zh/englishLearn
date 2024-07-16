@@ -17,12 +17,17 @@ const (
 
 type Program struct {
 	Dao *dao.Dao
+
+	ChoiceInterface map[int]interface{}
 }
 
 func main() {
 	cfg := config.New()
 	p := Program{
 		Dao: dao.Init(cfg),
+		ChoiceInterface: map[int]interface{}{
+			loadWords: dao.NewWordsFromJson(cfg),
+		},
 	}
 
 	for {
@@ -31,7 +36,7 @@ func main() {
 		fmt.Scanln(&choice)
 		switch choice {
 		case loadWords:
-			p.enterWordInputMode()
+			p.enterWordInputMode(p.ChoiceInterface[loadWords].(dao.WordInputMode))
 		default:
 			fmt.Println("无效输入，请重新输入。")
 		}
@@ -39,15 +44,8 @@ func main() {
 }
 
 // 进入单词输入模式
-func (p *Program) enterWordInputMode() {
-	var words model.Words
-	const filename = "words.json"
-
-	words, err := dao.ReadWordsFromFile(filename)
-	if err != nil {
-		fmt.Println("读取文件出错:", err)
-		return
-	}
+func (p *Program) enterWordInputMode(wIMode dao.WordInputMode) {
+	wIMode.Prepare()
 
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("请输入一个单词:")
@@ -55,15 +53,24 @@ func (p *Program) enterWordInputMode() {
 	inputWord = inputWord[:len(inputWord)-1] // 去掉换行符
 
 	exists := false
-	for i, word := range words.Words {
-		if word.Word == inputWord {
-			exists = true
-			fmt.Println("单词已存在，请输入新的短语:")
-			inputPhrase, _ := reader.ReadString('\n')
-			inputPhrase = inputPhrase[:len(inputPhrase)-1] // 去掉换行符
-			words.Words[i].Phrase = inputPhrase
-			words.Words[i].UpdatedAt = time.Now().Format(time.RFC3339)
-			break
+	word, err := wIMode.FindWord(inputWord)
+	if err != nil {
+		if err != dao.NotFoundErr {
+			panic(fmt.Errorf("查找单词出错: %v", err))
+		}
+	}
+	if word != nil {
+		exists = true
+	}
+
+	if exists {
+		fmt.Println("单词已存在，请输入新的短语:")
+		inputPhrase, _ := reader.ReadString('\n')
+		inputPhrase = inputPhrase[:len(inputPhrase)-1] // 去掉换行符
+		word.Phrase = inputPhrase
+		word.UpdatedAt = time.Now().Format(time.DateTime)
+		if err := wIMode.Update(word); err != nil {
+			panic(fmt.Errorf("更新单词出错: %v", err))
 		}
 	}
 
@@ -71,19 +78,16 @@ func (p *Program) enterWordInputMode() {
 		fmt.Println("请输入该单词的短语:")
 		inputPhrase, _ := reader.ReadString('\n')
 		inputPhrase = inputPhrase[:len(inputPhrase)-1] // 去掉换行符
-		newWord := model.Word{
+		newWord := &model.Word{
 			Word:      inputWord,
 			Phrase:    inputPhrase,
-			CreatedAt: time.Now().Format(time.RFC3339),
-			UpdatedAt: time.Now().Format(time.RFC3339),
+			CreatedAt: time.Now().Format(time.DateTime),
+			UpdatedAt: time.Now().Format(time.DateTime),
 		}
-		words.Words = append(words.Words, newWord)
+		if err := wIMode.Insert(newWord); err != nil {
+			panic(fmt.Errorf("写入单词出错: %v", err))
+		}
 	}
 
-	err = dao.WriteWordsToFile(filename, words)
-	if err != nil {
-		fmt.Println("写入文件出错:", err)
-	} else {
-		fmt.Println("单词已保存。")
-	}
+	fmt.Println("单词已保存。")
 }

@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var NotFoundErr = fmt.Errorf("not found")
+
 type Dao struct {
 	Db *gorm.DB
 }

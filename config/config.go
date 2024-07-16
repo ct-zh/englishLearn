@@ -9,12 +9,13 @@ import (
 // 通用config配置文件读取方法
 
 type Config struct {
-	Dsn string `yaml:"dsn"`
+	Dsn      string `yaml:"dsn"`
+	JsonPath string `yaml:"jsonPath"`
 } // 通用配置
 
 func New() *Config {
 	cfg := &Config{}
-	cfgFile, err := ioutil.ReadFile("./config.yaml")
+	cfgFile, err := ioutil.ReadFile("./config/config.yaml")
 	if err != nil {
 		panic(err)
 	}
