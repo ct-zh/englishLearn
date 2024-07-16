@@ -8,6 +8,10 @@ type Word struct {
 	UpdatedAt string `json:"updated_at" gorm:"column:updated_at"`
 }
 
+func (w Word) TableName() string {
+	return "words"
+}
+
 type Words struct {
 	Words []*Word `json:"words"`
 }

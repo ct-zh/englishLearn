@@ -12,31 +12,34 @@ import (
 )
 
 const (
-	loadWords = 1
+	loadWordsCMD string = "1"
+	exitCMD      string = "exit"
 )
 
 type Program struct {
 	Dao *dao.Dao
 
-	ChoiceInterface map[int]interface{}
+	ChoiceInterface map[string]interface{}
 }
 
 func main() {
 	cfg := config.New()
 	p := Program{
-		Dao: dao.Init(cfg),
-		ChoiceInterface: map[int]interface{}{
-			loadWords: dao.NewWordsFromJson(cfg),
-		},
+		Dao:             dao.Init(cfg),
+		ChoiceInterface: map[string]interface{}{},
 	}
+	p.ChoiceInterface[loadWordsCMD] = dao.NewWordsFromDB(p.Dao)
 
 	for {
 		fmt.Println("请输入数字1进入单词输入模式:")
-		var choice int
+		var choice string
 		fmt.Scanln(&choice)
 		switch choice {
-		case loadWords:
-			p.enterWordInputMode(p.ChoiceInterface[loadWords].(dao.WordInputMode))
+		case loadWordsCMD:
+			p.enterWordInputMode(p.ChoiceInterface[loadWordsCMD].(dao.WordInputMode))
+		case exitCMD:
+			fmt.Println("退出程序")
+			return
 		default:
 			fmt.Println("无效输入，请重新输入。")
 		}
@@ -59,7 +62,7 @@ func (p *Program) enterWordInputMode(wIMode dao.WordInputMode) {
 			panic(fmt.Errorf("查找单词出错: %v", err))
 		}
 	}
-	if word != nil {
+	if word != nil && word.Id > 0 {
 		exists = true
 	}
 
