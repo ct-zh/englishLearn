@@ -1,28 +1,24 @@
 package config
 
 import (
-	"io/ioutil"
-
-	"gopkg.in/yaml.v2"
+	"path/filepath"
 )
 
-// 通用config配置文件读取方法
-
+// Config 应用配置结构体
 type Config struct {
-	Dsn      string `yaml:"dsn"`
-	JsonPath string `yaml:"jsonPath"`
-} // 通用配置
+	DataFilePath string // JSON数据文件路径
+}
 
-func New() *Config {
-	cfg := &Config{}
-	cfgFile, err := ioutil.ReadFile("./config/config.yaml")
-	if err != nil {
-		panic(err)
+// DefaultConfig 返回默认配置
+func DefaultConfig() *Config {
+	return &Config{
+		DataFilePath: filepath.Join("data", "sections.json"),
 	}
-	err = yaml.Unmarshal(cfgFile, &cfg)
-	if err != nil {
-		panic(err)
-	}
+}
 
-	return cfg
+// LoadConfig 加载配置
+// TODO: 实现从配置文件加载配置的功能
+func LoadConfig() (*Config, error) {
+	// 目前返回默认配置
+	return DefaultConfig(), nil
 }
