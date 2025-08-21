@@ -21,12 +21,56 @@ MAIN_FILE="./cmd"
 # 支持的平台列表
 SUPPORTED_PLATFORMS=("darwin-amd64" "darwin-arm64" "linux-amd64" "windows-amd64" "all")
 
+# 自动检测当前平台
+detect_current_platform() {
+    local os_type arch_type
+    
+    # 检测操作系统
+    os_type=$(uname -s)
+    # 检测架构
+    arch_type=$(uname -m)
+    
+    case "$os_type" in
+        "Darwin")
+            case "$arch_type" in
+                "x86_64")
+                    echo "darwin-amd64"
+                    ;;
+                "arm64")
+                    echo "darwin-arm64"
+                    ;;
+                *)
+                    echo -e "${YELLOW}警告: 未知的macOS架构 $arch_type，默认使用 darwin-amd64${NC}" >&2
+                    echo "darwin-amd64"
+                    ;;
+            esac
+            ;;
+        "Linux")
+            case "$arch_type" in
+                "x86_64")
+                    echo "linux-amd64"
+                    ;;
+                *)
+                    echo -e "${YELLOW}警告: 未知的Linux架构 $arch_type，默认使用 linux-amd64${NC}" >&2
+                    echo "linux-amd64"
+                    ;;
+            esac
+            ;;
+        *)
+            echo -e "${YELLOW}警告: 未知的操作系统 $os_type，默认使用 linux-amd64${NC}" >&2
+            echo "linux-amd64"
+            ;;
+    esac
+}
+
 # 显示帮助信息
 show_help() {
     echo -e "${BLUE}英语学习工具构建脚本${NC}"
     echo
     echo -e "${YELLOW}使用方法:${NC}"
-    echo -e "  $0 [平台]                构建指定平台"
+    echo -e "  $0                     构建当前平台 (自动检测)"
+    echo -e "  $0 --all               构建所有平台"
+    echo -e "  $0 [平台]              构建指定平台"
     echo -e "  $0 --help              显示此帮助信息"
     echo
     echo -e "${YELLOW}支持的平台:${NC}"
@@ -34,12 +78,15 @@ show_help() {
     echo -e "  darwin-arm64           macOS (Apple Silicon)"
     echo -e "  linux-amd64            Linux (x86_64)"
     echo -e "  windows-amd64          Windows (x86_64)"
-    echo -e "  all                    所有平台 (默认)"
+    echo -e "  all                    所有平台"
     echo
     echo -e "${YELLOW}示例:${NC}"
-    echo -e "  $0                     构建所有平台"
+    echo -e "  $0                     构建当前平台"
+    echo -e "  $0 --all               构建所有平台"
     echo -e "  $0 darwin-amd64        只构建macOS Intel版本"
     echo -e "  $0 linux-amd64         只构建Linux版本"
+    echo
+    echo -e "${YELLOW}当前检测到的平台:${NC} $(detect_current_platform)"
     echo
 }
 
@@ -55,12 +102,15 @@ validate_platform() {
 }
 
 # 解析命令行参数
-TARGET_PLATFORM="all"
+TARGET_PLATFORM=""
 if [[ $# -gt 0 ]]; then
     case $1 in
         --help|-h)
             show_help
             exit 0
+            ;;
+        --all)
+            TARGET_PLATFORM="all"
             ;;
         *)
             if validate_platform "$1"; then
@@ -73,6 +123,9 @@ if [[ $# -gt 0 ]]; then
             fi
             ;;
     esac
+else
+    # 无参数时自动检测当前平台
+    TARGET_PLATFORM=$(detect_current_platform)
 fi
 
 # 检查Go环境
@@ -81,10 +134,14 @@ if ! command -v go &> /dev/null; then
     exit 1
 fi
 
+# 显示构建信息
 if [[ "$TARGET_PLATFORM" == "all" ]]; then
     echo -e "${YELLOW}开始构建 ${APP_NAME} (所有平台)...${NC}"
 else
     echo -e "${YELLOW}开始构建 ${APP_NAME} (${TARGET_PLATFORM})...${NC}"
+    if [[ "$TARGET_PLATFORM" == "$(detect_current_platform)" ]]; then
+        echo -e "${GREEN}✓ 已自动检测到当前平台${NC}"
+    fi
 fi
 
 # 创建build目录（如果不存在）

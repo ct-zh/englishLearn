@@ -117,7 +117,7 @@ func (n *SelectSectionNode) handleSelectSection(ctx *model.MenuContext) error {
 				fmt.Println("已经是最后一页了")
 			}
 		case "b":
-			return nil
+			return model.ErrBack
 		default:
 			// 尝试解析为数字
 			if choice := parseChoice(input, len(resp.Sections)); choice > 0 {
@@ -183,7 +183,7 @@ func (n *SelectSectionNode) showSectionMenu(ctx *model.MenuContext, section *mod
 		case "5":
 			return n.handleSelectSection(ctx) // 重新选择章节
 		case "b":
-			return nil
+			return model.ErrBack
 		default:
 			fmt.Println("无效的选择，请重新输入")
 		}

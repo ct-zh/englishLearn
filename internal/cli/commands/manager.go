@@ -78,7 +78,7 @@ func (n *FileManagerNode) handleFileManager(ctx *model.MenuContext) error {
 			fmt.Println("按回车键继续...")
 			fmt.Scanln()
 		case "b":
-			return nil
+			return model.ErrBack
 		default:
 			fmt.Println("无效的选择，请重新输入")
 			fmt.Println("按回车键继续...")

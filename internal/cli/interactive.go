@@ -14,7 +14,6 @@ import (
 // 错误常量
 var (
 	ErrExit = fmt.Errorf("exit")
-	ErrBack = fmt.Errorf("back")
 )
 
 // InteractiveEngine 交互式菜单引擎
@@ -70,7 +69,7 @@ func (e *InteractiveEngine) Start() error {
 				fmt.Println("感谢使用，再见！")
 				break
 			}
-			if err == ErrBack {
+			if err == model.ErrBack {
 				continue // 返回上级，继续循环
 			}
 			fmt.Printf("错误: %v\n", err)
@@ -166,7 +165,7 @@ func (e *InteractiveEngine) goBack() error {
 	e.nodeStack = e.nodeStack[:len(e.nodeStack)-1]
 	e.context.CurrentNode = e.currentNode
 	
-	return ErrBack
+	return model.ErrBack
 }
 
 // GetCurrentPath 获取当前路径
