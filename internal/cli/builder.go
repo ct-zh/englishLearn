@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"github.com/ct-zh/englishLearn/internal/cli/commands"
+	"github.com/ct-zh/englishLearn/internal/dao"
 	sectionsLogic "github.com/ct-zh/englishLearn/internal/logic/sections"
 	"github.com/ct-zh/englishLearn/model"
 )
@@ -21,9 +22,9 @@ func NewMenuTreeBuilder() *MenuTreeBuilder {
 }
 
 // NewMenuTreeBuilderWithService 创建带service的菜单树构建器 (用于Wire)
-func NewMenuTreeBuilderWithService(service *sectionsLogic.Service) *MenuTreeBuilder {
+func NewMenuTreeBuilderWithService(service *sectionsLogic.Service, daoFactory *dao.DAOFactory) *MenuTreeBuilder {
 	return &MenuTreeBuilder{
-		router: commands.NewMenuRouterWithService(service),
+		router: commands.NewMenuRouterWithService(service, daoFactory),
 	}
 }
 

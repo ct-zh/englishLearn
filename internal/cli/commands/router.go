@@ -9,8 +9,9 @@ import (
 
 // MenuRouter 菜单路由器
 type MenuRouter struct {
-	root    model.MenuNode
-	service *sectionsLogic.Service
+	root       model.MenuNode
+	service    *sectionsLogic.Service
+	daoFactory *dao.DAOFactory
 }
 
 // NewMenuRouter 创建菜单路由器
@@ -19,9 +20,10 @@ func NewMenuRouter() *MenuRouter {
 }
 
 // NewMenuRouterWithService 创建带service的菜单路由器 (用于Wire)
-func NewMenuRouterWithService(service *sectionsLogic.Service) *MenuRouter {
+func NewMenuRouterWithService(service *sectionsLogic.Service, daoFactory *dao.DAOFactory) *MenuRouter {
 	return &MenuRouter{
-		service: service,
+		service:    service,
+		daoFactory: daoFactory,
 	}
 }
 
@@ -69,6 +71,12 @@ func (r *MenuRouter) BuildDefaultTree() model.MenuNode {
 	selectSection.Menu(sections.NewAddWord(service))
 	selectSection.Menu(sections.NewListWords(service))
 	selectSection.Menu(sections.NewRandomWords(service))
+
+	// 创建文件管理节点并挂载到根节点
+	if r.daoFactory != nil {
+		fileManager := NewFileManager(r.daoFactory)
+		root.Menu(fileManager)
+	}
 
 	r.root = root
 	return root

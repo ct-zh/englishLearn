@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	
+	"github.com/ct-zh/englishLearn/config"
 	"github.com/ct-zh/englishLearn/model"
 )
 
@@ -21,6 +23,7 @@ type InteractiveEngine struct {
 	currentNode model.MenuNode
 	context     *model.MenuContext
 	nodeStack   []model.MenuNode // 节点栈，用于返回上级
+	config      *config.Config   // 配置信息
 }
 
 // NewInteractiveEngine 创建交互式菜单引擎
@@ -35,9 +38,25 @@ func NewInteractiveEngine(root model.MenuNode) *InteractiveEngine {
 	}
 }
 
+// NewInteractiveEngineWithConfig 创建带配置的交互式菜单引擎
+func NewInteractiveEngineWithConfig(root model.MenuNode, cfg *config.Config) *InteractiveEngine {
+	return &InteractiveEngine{
+		root:        root,
+		currentNode: root,
+		context: &model.MenuContext{
+			CurrentNode: root,
+		},
+		nodeStack: make([]model.MenuNode, 0),
+		config:    cfg,
+	}
+}
+
 // Start 启动交互式菜单
 func (e *InteractiveEngine) Start() error {
 	fmt.Printf("\n欢迎使用 %s\n", e.root.GetName())
+	
+	// 显示数据文件信息
+	e.displayDataFileInfo()
 	
 	for {
 		e.displayCurrentMenu()
@@ -158,4 +177,56 @@ func (e *InteractiveEngine) GetCurrentPath() []string {
 	}
 	path = append(path, e.currentNode.GetID())
 	return path
+}
+
+// displayDataFileInfo 显示数据文件信息
+func (e *InteractiveEngine) displayDataFileInfo() {
+	if e.config == nil {
+		return
+	}
+	
+	// 获取文件路径
+	dataFilePath := e.config.DataFilePath
+	
+	// 检查文件是否存在
+	fileInfo, err := os.Stat(dataFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Printf("📁 数据文件: %s (文件不存在)\n", dataFilePath)
+		} else {
+			fmt.Printf("📁 数据文件: %s (无法访问: %v)\n", dataFilePath, err)
+		}
+	} else {
+		// 显示文件信息
+		relPath := e.getRelativePath(dataFilePath)
+		size := fileInfo.Size()
+		if size < 1024 {
+			fmt.Printf("📁 数据文件: %s (%d B)\n", relPath, size)
+		} else if size < 1024*1024 {
+			fmt.Printf("📁 数据文件: %s (%.1f KB)\n", relPath, float64(size)/1024)
+		} else {
+			fmt.Printf("📁 数据文件: %s (%.1f MB)\n", relPath, float64(size)/(1024*1024))
+		}
+	}
+}
+
+// getRelativePath 获取相对路径显示
+func (e *InteractiveEngine) getRelativePath(fullPath string) string {
+	// 尝试获取相对于当前工作目录的路径
+	wd, err := os.Getwd()
+	if err != nil {
+		return fullPath
+	}
+	
+	relPath, err := filepath.Rel(wd, fullPath)
+	if err != nil {
+		return fullPath
+	}
+	
+	// 如果相对路径更短，使用相对路径
+	if len(relPath) < len(fullPath) {
+		return relPath
+	}
+	
+	return fullPath
 }

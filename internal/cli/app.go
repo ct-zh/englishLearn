@@ -2,14 +2,19 @@ package cli
 
 import (
 	"fmt"
+
+	"github.com/ct-zh/englishLearn/config"
+	"github.com/ct-zh/englishLearn/internal/dao"
 	sectionsLogic "github.com/ct-zh/englishLearn/internal/logic/sections"
 )
 
 // App CLI应用结构
 type App struct {
-	name     string
-	builder  *MenuTreeBuilder
-	resolver *CommandPathResolver
+	name       string
+	builder    *MenuTreeBuilder
+	resolver   *CommandPathResolver
+	config     *config.Config
+	service    *sectionsLogic.Service
 }
 
 // NewApp 创建新的CLI应用
@@ -32,8 +37,8 @@ func NewApp() *App {
 }
 
 // NewAppWithService 创建带有service的CLI应用 (用于Wire)
-func NewAppWithService(service *sectionsLogic.Service) *App {
-	builder := NewMenuTreeBuilderWithService(service)
+func NewAppWithService(cfg *config.Config, service *sectionsLogic.Service, daoFactory *dao.DAOFactory) *App {
+	builder := NewMenuTreeBuilderWithService(service, daoFactory)
 	root := builder.BuildDefaultTree()
 	
 	// 验证菜单树
@@ -47,12 +52,14 @@ func NewAppWithService(service *sectionsLogic.Service) *App {
 		name:     "英语学习工具",
 		builder:  builder,
 		resolver: resolver,
+		config:   cfg,
+		service:  service,
 	}
 }
 
 // ProvideApp 提供CLI应用实例 (Wire Provider)
-func ProvideApp(service *sectionsLogic.Service) *App {
-	return NewAppWithService(service)
+func ProvideApp(cfg *config.Config, service *sectionsLogic.Service, daoFactory *dao.DAOFactory) *App {
+	return NewAppWithService(cfg, service, daoFactory)
 }
 
 // Run 运行CLI应用
@@ -74,7 +81,7 @@ func (a *App) runCommandMode(args []string) error {
 // runInteractiveMode 运行交互模式
 func (a *App) runInteractiveMode() error {
 	root := a.builder.GetRoot()
-	engine := NewInteractiveEngine(root)
+	engine := NewInteractiveEngineWithConfig(root, a.config)
 	return engine.Start()
 }
 
