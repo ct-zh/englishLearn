@@ -324,3 +324,38 @@ func (s *Service) SetCurrentSection(section string) error {
 	fmt.Printf("设置当前章节为: %s\n", section)
 	return nil
 }
+
+// CreateSection 创建新章节
+func (s *Service) CreateSection(req *model.CreateSectionRequest) error {
+	ctx := context.Background()
+	
+	// 检查章节名称是否为空
+	if req.Name == "" {
+		return fmt.Errorf("章节名称不能为空")
+	}
+	
+	// 检查章节是否已存在
+	exists, err := s.sectionDAO.SectionExists(ctx, req.Name)
+	if err != nil {
+		return fmt.Errorf("检查章节存在性失败: %w", err)
+	}
+	
+	if exists {
+		return fmt.Errorf("章节 '%s' 已存在", req.Name)
+	}
+	
+	// 创建新章节实体
+	section := &model.SectionEntity{
+		Name:  req.Name,
+		Words: []model.WordEntity{}, // 初始化为空的单词列表
+	}
+	
+	// 调用DAO层创建章节
+	err = s.sectionDAO.CreateSection(ctx, section)
+	if err != nil {
+		return fmt.Errorf("创建章节失败: %w", err)
+	}
+	
+	fmt.Printf("✓ 成功创建章节: %s\n", req.Name)
+	return nil
+}

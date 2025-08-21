@@ -57,6 +57,10 @@ func (r *MenuRouter) BuildDefaultTree() model.MenuNode {
 	sectionsNode := sections.NewSections()
 	root.Menu(sectionsNode)
 
+	// 创建createSection节点并挂载到sections下（第一个选项）
+	createSection := sections.NewCreateSection(service)
+	sectionsNode.Menu(createSection)
+
 	// 创建selectSection节点并挂载到sections下
 	selectSection := sections.NewSelectSection(service)
 	sectionsNode.Menu(selectSection)
