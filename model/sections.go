@@ -6,6 +6,7 @@ package model
 type AddWordRequest struct {
 	Word        string `json:"word"`
 	Translation string `json:"translation"`
+	Phrase      string `json:"phrase"`      // 例句
 	Section     string `json:"section"`
 }
 

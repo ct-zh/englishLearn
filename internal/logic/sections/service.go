@@ -44,7 +44,7 @@ func (s *Service) AddWord(req *model.AddWordRequest) error {
 	word := model.WordEntity{
 		W:      req.Word,
 		C:      req.Translation,
-		Phrase: "", // 暂时为空，后续可以扩展
+		Phrase: req.Phrase, // 使用请求中的例句
 	}
 	
 	// 添加单词到章节
@@ -98,7 +98,11 @@ func (s *Service) ListWords(req *model.ListWordsRequest) (*model.ListWordsRespon
 	words := section.Words[start:end]
 	fmt.Printf("章节 %s 第%d页单词列表 (第%d页/共%d页):\n", req.Section, req.Page, req.Page, totalPages)
 	for i, word := range words {
-		fmt.Printf("%d. %s - %s\n", start+i+1, word.W, word.C)
+		if word.Phrase != "" {
+			fmt.Printf("%d. %s - %s\n   例句: %s\n", start+i+1, word.W, word.C, word.Phrase)
+		} else {
+			fmt.Printf("%d. %s - %s\n", start+i+1, word.W, word.C)
+		}
 	}
 	
 	return &model.ListWordsResponse{
@@ -139,7 +143,11 @@ func (s *Service) RandomWords(req *model.RandomWordsRequest) (*model.RandomWords
 	
 	fmt.Printf("从章节 %s 随机选择 %d 个单词进行练习:\n", req.Section, count)
 	for i, word := range randomWords {
-		fmt.Printf("%d. %s - %s\n", i+1, word.W, word.C)
+		if word.Phrase != "" {
+			fmt.Printf("%d. %s - %s\n   例句: %s\n", i+1, word.W, word.C, word.Phrase)
+		} else {
+			fmt.Printf("%d. %s - %s\n", i+1, word.W, word.C)
+		}
 	}
 	
 	return &model.RandomWordsResponse{
@@ -184,7 +192,11 @@ func (s *Service) SearchWord(req *model.SearchWordRequest) (*model.SearchWordRes
 	
 	fmt.Printf("搜索关键词 '%s' 找到 %d 个结果:\n", req.Keyword, len(searchWords))
 	for i, word := range searchWords {
-		fmt.Printf("%d. %s - %s\n", i+1, word.W, word.C)
+		if word.Phrase != "" {
+			fmt.Printf("%d. %s - %s\n   例句: %s\n", i+1, word.W, word.C, word.Phrase)
+		} else {
+			fmt.Printf("%d. %s - %s\n", i+1, word.W, word.C)
+		}
 	}
 	
 	return &model.SearchWordResponse{

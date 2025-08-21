@@ -200,9 +200,14 @@ func (n *SelectSectionNode) handleAddWord(sectionName string) error {
 	var translation string
 	fmt.Scanln(&translation)
 	
+	fmt.Print("请输入例句(可选，直接回车跳过): ")
+	var phrase string
+	fmt.Scanln(&phrase)
+	
 	req := &model.AddWordRequest{
 		Word:        word,
 		Translation: translation,
+		Phrase:      phrase,
 		Section:     sectionName,
 	}
 	
