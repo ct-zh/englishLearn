@@ -16,9 +16,13 @@ func DefaultConfig() *Config {
 	}
 }
 
-// LoadConfig 加载配置
+// // LoadConfig 加载配置
 // TODO: 实现从配置文件加载配置的功能
 func LoadConfig() (*Config, error) {
-	// 目前返回默认配置
 	return DefaultConfig(), nil
+}
+
+// ProvideConfig 提供配置实例 (Wire Provider)
+func ProvideConfig() *Config {
+	return DefaultConfig()
 }

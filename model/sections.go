@@ -28,6 +28,22 @@ type SearchWordRequest struct {
 	Section string `json:"section,omitempty"` // 可选，指定在某个章节中搜索
 }
 
+// ListWordsResponse 列出单词响应
+type ListWordsResponse struct {
+	Words       []WordEntity `json:"words"`
+	Total       int          `json:"total"`
+	CurrentPage int          `json:"current_page"`
+	TotalPages  int          `json:"total_pages"`
+	HasNext     bool         `json:"has_next"`
+	HasPrev     bool         `json:"has_prev"`
+}
+
+// RandomWordsResponse 随机单词响应
+type RandomWordsResponse struct {
+	Words []WordEntity `json:"words"`
+	Count int          `json:"count"`
+}
+
 // SearchWordResponse 搜索单词响应
 type SearchWordResponse struct {
 	Words []WordEntity `json:"words"`
@@ -46,10 +62,32 @@ type UpdateSectionRequest struct {
 	Words    []WordEntity `json:"words,omitempty"`
 }
 
+// ListSectionsRequest 列出章节请求
+type ListSectionsRequest struct {
+	Page int `json:"page"` // 页码，从1开始
+	Size int `json:"size"` // 每页大小
+}
+
 // ListSectionsResponse 列出章节响应
 type ListSectionsResponse struct {
-	Sections []SectionEntity `json:"sections"`
-	Total    int             `json:"total"`
+	Sections    []SectionEntity `json:"sections"`
+	Total       int             `json:"total"`
+	CurrentPage int             `json:"current_page"`
+	TotalPages  int             `json:"total_pages"`
+	HasNext     bool            `json:"has_next"`
+	HasPrev     bool            `json:"has_prev"`
+}
+
+// SelectSectionRequest 选择章节请求
+type SelectSectionRequest struct {
+	SectionName string `json:"section_name"`
+}
+
+// SelectSectionResponse 选择章节响应
+type SelectSectionResponse struct {
+	Selected    SectionEntity `json:"selected"`
+	WordCount   int           `json:"word_count"`
+	IsSuccess   bool          `json:"is_success"`
 }
 
 // ===== 实体结构体 =====

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	sectionsLogic "github.com/ct-zh/englishLearn/internal/logic/sections"
 )
 
 // App CLI应用结构
@@ -24,10 +25,34 @@ func NewApp() *App {
 	resolver := NewCommandPathResolver(root)
 	
 	return &App{
-		name:     "英语学习助手",
+		name:     "英语学习工具",
 		builder:  builder,
 		resolver: resolver,
 	}
+}
+
+// NewAppWithService 创建带有service的CLI应用 (用于Wire)
+func NewAppWithService(service *sectionsLogic.Service) *App {
+	builder := NewMenuTreeBuilderWithService(service)
+	root := builder.BuildDefaultTree()
+	
+	// 验证菜单树
+	if err := builder.ValidateTree(root); err != nil {
+		panic(fmt.Sprintf("菜单树验证失败: %v", err))
+	}
+	
+	resolver := NewCommandPathResolver(root)
+	
+	return &App{
+		name:     "英语学习工具",
+		builder:  builder,
+		resolver: resolver,
+	}
+}
+
+// ProvideApp 提供CLI应用实例 (Wire Provider)
+func ProvideApp(service *sectionsLogic.Service) *App {
+	return NewAppWithService(service)
 }
 
 // Run 运行CLI应用

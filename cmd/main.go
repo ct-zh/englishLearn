@@ -3,13 +3,15 @@ package main
 import (
 	"fmt"
 	"os"
-
-	"github.com/ct-zh/englishLearn/internal/cli"
 )
 
 func main() {
-	// 创建CLI应用实例
-	app := cli.NewApp()
+	// 使用Wire进行依赖注入，创建CLI应用实例
+	app, err := wireApp()
+	if err != nil {
+		fmt.Printf("初始化应用失败: %v\n", err)
+		os.Exit(1)
+	}
 	
 	// 运行应用，传入命令行参数（去除程序名）
 	var args []string
