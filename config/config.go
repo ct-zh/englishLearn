@@ -81,18 +81,24 @@ func LoadConfigWithArgs(args []string) (*Config, error) {
 		
 		// 验证指定的文件
 		if err := ValidateDataFile(config.DataFilePath); err != nil {
-			return nil, fmt.Errorf("数据文件验证失败: %w", err)
+			// 文件验证失败，强制用户输入有效的JSON文件路径
+			reason := fmt.Sprintf("指定的文件 '%s' 验证失败: %v", config.DataFilePath, err)
+			validPath, promptErr := promptForValidJSONFile(reason)
+			if promptErr != nil {
+				return nil, fmt.Errorf("获取有效JSON文件路径失败: %w", promptErr)
+			}
+			config.DataFilePath = validPath
 		}
 	} else {
-		// 使用默认文件时，检查文件是否存在，如果不存在给出友好提示
+		// 使用默认文件时，检查文件是否存在，如果不存在或无效则强制用户输入
 		if err := ValidateDataFile(config.DataFilePath); err != nil {
-			// 对于默认文件，如果不存在，给出创建提示
-			if os.IsNotExist(err) {
-				fmt.Printf("警告: 默认数据文件 %s 不存在\n", config.DataFilePath)
-				fmt.Printf("提示: 您可以使用 -f 参数指定其他数据文件，或创建默认文件\n")
-			} else {
-				return nil, fmt.Errorf("默认数据文件验证失败: %w", err)
+			// 默认文件验证失败，强制用户输入有效的JSON文件路径
+			reason := fmt.Sprintf("默认数据文件 '%s' 验证失败: %v", config.DataFilePath, err)
+			validPath, promptErr := promptForValidJSONFile(reason)
+			if promptErr != nil {
+				return nil, fmt.Errorf("获取有效JSON文件路径失败: %w", promptErr)
 			}
+			config.DataFilePath = validPath
 		}
 	}
 	
@@ -219,6 +225,95 @@ func (c *Config) GetFileInfo() (map[string]interface{}, error) {
 	info["sections_count"] = len(data)
 	
 	return info, nil
+}
+
+// promptForValidJSONFile 强制用户输入有效的JSON文件路径
+func promptForValidJSONFile(reason string) (string, error) {
+	// 导入所需的包
+	// 这里我们需要bufio和strings包
+	fmt.Println("\n=== JSON配置文件验证失败 ===")
+	fmt.Printf("错误原因: %s\n\n", reason)
+	
+	fmt.Println("系统需要一个有效的JSON配置文件才能继续运行。")
+	fmt.Println("请输入一个符合以下要求的JSON文件路径：")
+	fmt.Println("  1. 文件必须存在且可读")
+	fmt.Println("  2. 文件扩展名必须是 .json")
+	fmt.Println("  3. 文件内容必须是有效的JSON格式")
+	fmt.Println("  4. JSON根元素必须是对象类型")
+	fmt.Println("")
+	fmt.Println("支持相对路径和绝对路径。")
+	fmt.Println("输入 'quit' 或 'exit' 退出程序。")
+	fmt.Println("")
+	
+	// 使用标准输入读取，避免导入bufio
+	for {
+		fmt.Print("请输入JSON文件路径: ")
+		
+		// 读取用户输入
+		var input string
+		if _, err := fmt.Scanln(&input); err != nil {
+			fmt.Printf("读取输入失败: %v\n", err)
+			continue
+		}
+		
+		// 去除前后空格
+		input = trimSpace(input)
+		
+		// 检查退出命令
+		if input == "quit" || input == "exit" {
+			fmt.Println("用户选择退出程序。")
+			os.Exit(0)
+		}
+		
+		// 检查输入是否为空
+		if input == "" {
+			fmt.Println("错误: 文件路径不能为空，请重新输入。")
+			continue
+		}
+		
+		// 处理路径格式
+		var fullPath string
+		if filepath.IsAbs(input) {
+			fullPath = input
+		} else {
+			// 相对路径相对于当前工作目录
+			wd, err := os.Getwd()
+			if err != nil {
+				fmt.Printf("错误: 获取当前工作目录失败: %v\n", err)
+				continue
+			}
+			fullPath = filepath.Join(wd, input)
+		}
+		
+		fmt.Printf("正在验证文件: %s\n", fullPath)
+		
+		// 验证文件
+		if err := ValidateDataFile(fullPath); err != nil {
+			fmt.Printf("验证失败: %v\n", err)
+			fmt.Println("请重新输入一个有效的JSON文件路径。")
+			continue
+		}
+		
+		fmt.Println("✓ 文件验证成功！")
+		return fullPath, nil
+	}
+}
+
+// trimSpace 去除字符串前后空格（简单实现，避免导入strings包）
+func trimSpace(s string) string {
+	// 去除前导空格
+	start := 0
+	for start < len(s) && (s[start] == ' ' || s[start] == '\t' || s[start] == '\n' || s[start] == '\r') {
+		start++
+	}
+	
+	// 去除尾随空格
+	end := len(s)
+	for end > start && (s[end-1] == ' ' || s[end-1] == '\t' || s[end-1] == '\n' || s[end-1] == '\r') {
+		end--
+	}
+	
+	return s[start:end]
 }
 
 // ValidateDataFile 验证数据文件
