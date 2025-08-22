@@ -1,7 +1,10 @@
 package sections
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/ct-zh/englishLearn/internal/logic/sections"
 	"github.com/ct-zh/englishLearn/model"
@@ -193,9 +196,9 @@ func (n *SelectSectionNode) handleAddWord(sectionName string) error {
 	}
 
 	fmt.Print("请输入例句(可选，直接回车跳过): ")
-	var phrase string
-	// 例句是可选的，忽略输入错误
-	_, _ = fmt.Scanln(&phrase)
+	reader := bufio.NewReader(os.Stdin)
+	phrase, _ := reader.ReadString('\n')
+	phrase = strings.TrimSpace(phrase)
 
 	req := &model.AddWordRequest{
 		Word:        word,

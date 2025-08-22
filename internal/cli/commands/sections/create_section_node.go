@@ -1,7 +1,10 @@
 package sections
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/ct-zh/englishLearn/internal/logic/sections"
 	"github.com/ct-zh/englishLearn/model"
@@ -33,11 +36,13 @@ func NewCreateSection(service *sections.Service) *CreateSectionNode {
 func (n *CreateSectionNode) handleCreateSection(ctx *model.MenuContext) error {
 	for {
 		fmt.Print("请输入新章节名称: ")
-		var sectionName string
-		if _, err := fmt.Scanln(&sectionName); err != nil {
+		reader := bufio.NewReader(os.Stdin)
+		sectionName, err := reader.ReadString('\n')
+		if err != nil {
 			fmt.Printf("输入错误: %v\n", err)
 			continue
 		}
+		sectionName = strings.TrimSpace(sectionName)
 
 		// 检查输入是否为空
 		if sectionName == "" {
@@ -51,7 +56,7 @@ func (n *CreateSectionNode) handleCreateSection(ctx *model.MenuContext) error {
 		}
 
 		// 调用service创建章节
-		err := n.service.CreateSection(req)
+		err = n.service.CreateSection(req)
 		if err != nil {
 			// 如果是章节已存在的错误，允许用户重新输入
 			if fmt.Sprintf("%v", err) == fmt.Sprintf("章节 '%s' 已存在", sectionName) {
