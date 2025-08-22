@@ -56,19 +56,22 @@ func (n *FileManagerNode) handleFileManager(ctx *model.MenuContext) error {
 		
 		// 读取用户输入
 		var choice string
-		fmt.Scanln(&choice)
+		if _, err := fmt.Scanln(&choice); err != nil {
+			fmt.Printf("输入错误: %v\n", err)
+			continue
+		}
 		
 		switch strings.ToLower(choice) {
 		case "1":
 			if err := n.handleChangeFile(); err != nil {
 				fmt.Printf("切换文件失败: %v\n", err)
 				fmt.Println("按回车键继续...")
-				fmt.Scanln()
+				_, _ = fmt.Scanln()
 			}
 		case "2":
 			n.displayDetailedFileInfo(fileInfo)
 			fmt.Println("按回车键继续...")
-			fmt.Scanln()
+			_, _ = fmt.Scanln()
 		case "3":
 			if err := n.handleRollbackFile(); err != nil {
 				fmt.Printf("回滚失败: %v\n", err)
@@ -76,13 +79,13 @@ func (n *FileManagerNode) handleFileManager(ctx *model.MenuContext) error {
 				fmt.Println("✓ 文件回滚成功")
 			}
 			fmt.Println("按回车键继续...")
-			fmt.Scanln()
+			_, _ = fmt.Scanln()
 		case "b":
 			return model.ErrBack
 		default:
 			fmt.Println("无效的选择，请重新输入")
 			fmt.Println("按回车键继续...")
-			fmt.Scanln()
+			_, _ = fmt.Scanln()
 		}
 	}
 }
@@ -179,7 +182,7 @@ func (n *FileManagerNode) handleChangeFile() error {
 	}
 	
 	fmt.Println("按回车键继续...")
-	fmt.Scanln()
+	_, _ = fmt.Scanln()
 	return nil
 }
 
@@ -189,7 +192,10 @@ func (n *FileManagerNode) handleRollbackFile() error {
 	fmt.Print("确认要回滚到上一个文件吗？(y/N): ")
 	
 	var confirm string
-	fmt.Scanln(&confirm)
+	if _, err := fmt.Scanln(&confirm); err != nil {
+		// 输入错误时默认为取消
+		confirm = "n"
+	}
 	
 	if strings.ToLower(confirm) != "y" && strings.ToLower(confirm) != "yes" {
 		fmt.Println("取消回滚操作")

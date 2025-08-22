@@ -3,38 +3,9 @@ package sections
 import (
 	"fmt"
 
-	"github.com/ct-zh/englishLearn/internal/dao"
 	"github.com/ct-zh/englishLearn/internal/logic/sections"
 	"github.com/ct-zh/englishLearn/model"
 )
-
-// SectionsNode 章节节点
-type SectionsNode struct {
-	*model.BaseMenuNode
-	service *sections.Service
-}
-
-// NewSections 创建章节节点
-func NewSections() *SectionsNode {
-	// 创建DAO工厂和service
-	daoFactory := dao.NewDAOFactory("../../data")
-	sectionDAO := daoFactory.GetSectionDAO()
-	service := sections.NewService(sectionDAO)
-
-	return &SectionsNode{
-		BaseMenuNode: &model.BaseMenuNode{
-			ID:       "sections",
-			Name:     "按章节记忆",
-			Command:  "1",
-			Children: make(map[string]model.MenuNode),
-			Handler: func(ctx *model.MenuContext) error {
-				fmt.Println("进入章节管理模式...")
-				return nil
-			},
-		},
-		service: service,
-	}
-}
 
 // SelectSectionNode 选择章节节点
 type SelectSectionNode struct {
@@ -105,7 +76,10 @@ func (n *SelectSectionNode) handleSelectSection(ctx *model.MenuContext) error {
 
 		// 读取用户输入
 		var input string
-		fmt.Scanln(&input)
+		if _, err := fmt.Scanln(&input); err != nil {
+			fmt.Printf("输入错误: %v\n", err)
+			continue
+		}
 		
 		switch input {
 		case "p":
@@ -165,7 +139,10 @@ func (n *SelectSectionNode) showSectionMenu(ctx *model.MenuContext, section *mod
 		fmt.Print("请选择操作: ")
 
 		var choice string
-		fmt.Scanln(&choice)
+		if _, err := fmt.Scanln(&choice); err != nil {
+			fmt.Printf("输入错误: %v\n", err)
+			continue
+		}
 
 		switch choice {
 		case "1":
@@ -205,15 +182,20 @@ func (n *SelectSectionNode) showSectionMenu(ctx *model.MenuContext, section *mod
 func (n *SelectSectionNode) handleAddWord(sectionName string) error {
 	fmt.Print("请输入单词: ")
 	var word string
-	fmt.Scanln(&word)
+	if _, err := fmt.Scanln(&word); err != nil {
+		return fmt.Errorf("输入错误: %v", err)
+	}
 
 	fmt.Print("请输入中文释义: ")
 	var translation string
-	fmt.Scanln(&translation)
+	if _, err := fmt.Scanln(&translation); err != nil {
+		return fmt.Errorf("输入错误: %v", err)
+	}
 
 	fmt.Print("请输入例句(可选，直接回车跳过): ")
 	var phrase string
-	fmt.Scanln(&phrase)
+	// 例句是可选的，忽略输入错误
+	_, _ = fmt.Scanln(&phrase)
 
 	req := &model.AddWordRequest{
 		Word:        word,
@@ -241,7 +223,10 @@ func (n *SelectSectionNode) handleListWords(sectionName string) error {
 func (n *SelectSectionNode) handleRandomWords(sectionName string) error {
 	fmt.Print("请输入练习单词数量(默认10): ")
 	var input string
-	fmt.Scanln(&input)
+	if _, err := fmt.Scanln(&input); err != nil {
+		// 输入错误时使用默认值
+		input = ""
+	}
 
 	count := 10
 	if c := parseChoice(input, 100); c > 0 {
@@ -261,7 +246,9 @@ func (n *SelectSectionNode) handleRandomWords(sectionName string) error {
 func (n *SelectSectionNode) handleSearchWords(sectionName string) error {
 	fmt.Print("请输入搜索关键词: ")
 	var keyword string
-	fmt.Scanln(&keyword)
+	if _, err := fmt.Scanln(&keyword); err != nil {
+		return fmt.Errorf("输入错误: %v", err)
+	}
 
 	req := &model.SearchWordRequest{
 		Keyword: keyword,
@@ -270,197 +257,4 @@ func (n *SelectSectionNode) handleSearchWords(sectionName string) error {
 
 	_, err := n.service.SearchWord(req)
 	return err
-}
-
-// parseChoice 解析用户输入的选择
-func parseChoice(input string, max int) int {
-	if input == "" {
-		return 0
-	}
-
-	// 简单的字符串转数字
-	choice := 0
-	for _, r := range input {
-		if r >= '0' && r <= '9' {
-			choice = choice*10 + int(r-'0')
-		} else {
-			return 0
-		}
-	}
-
-	if choice >= 1 && choice <= max {
-		return choice
-	}
-	return 0
-}
-
-// AddWordNode 添加单词节点
-type AddWordNode struct {
-	*model.BaseMenuNode
-	service *sections.Service
-}
-
-// NewAddWord 创建添加单词节点
-func NewAddWord(service *sections.Service) *AddWordNode {
-	return &AddWordNode{
-		BaseMenuNode: &model.BaseMenuNode{
-			ID:       "addWord",
-			Name:     "添加单词",
-			Command:  "a",
-			Children: make(map[string]model.MenuNode),
-			Handler: func(ctx *model.MenuContext) error {
-				fmt.Println("开始添加单词...")
-
-				// 从上下文参数中获取单词信息
-				req := &model.AddWordRequest{
-					Section: service.GetCurrentSection(),
-				}
-
-				if ctx.Args != nil {
-					if word, ok := ctx.Args["word"].(string); ok {
-						req.Word = word
-					}
-					if translation, ok := ctx.Args["translation"].(string); ok {
-						req.Translation = translation
-					}
-				}
-
-				return service.AddWord(req)
-			},
-		},
-		service: service,
-	}
-}
-
-// ListWordsNode 查看单词节点
-type ListWordsNode struct {
-	*model.BaseMenuNode
-	service *sections.Service
-}
-
-// NewListWords 创建查看单词节点
-func NewListWords(service *sections.Service) *ListWordsNode {
-	return &ListWordsNode{
-		BaseMenuNode: &model.BaseMenuNode{
-			ID:       "listWords",
-			Name:     "查看单词",
-			Command:  "3",
-			Children: make(map[string]model.MenuNode),
-			Handler: func(ctx *model.MenuContext) error {
-				req := &model.ListWordsRequest{
-					Page: 1,
-					Size: 10,
-				}
-
-				_, err := service.ListWords(req)
-				return err
-			},
-		},
-		service: service,
-	}
-}
-
-// RandomWordsNode 随机练习节点
-type RandomWordsNode struct {
-	*model.BaseMenuNode
-	service *sections.Service
-}
-
-// NewRandomWords 创建随机练习节点
-func NewRandomWords(service *sections.Service) *RandomWordsNode {
-	return &RandomWordsNode{
-		BaseMenuNode: &model.BaseMenuNode{
-			ID:       "randomWords",
-			Name:     "随机练习",
-			Command:  "4",
-			Children: make(map[string]model.MenuNode),
-			Handler: func(ctx *model.MenuContext) error {
-				req := &model.RandomWordsRequest{
-					Count: 10,
-				}
-
-				_, err := service.RandomWords(req)
-				return err
-			},
-		},
-		service: service,
-	}
-}
-
-// CreateSectionNode 创建章节节点
-type CreateSectionNode struct {
-	*model.BaseMenuNode
-	service *sections.Service
-}
-
-// NewCreateSection 创建新章节节点
-func NewCreateSection(service *sections.Service) *CreateSectionNode {
-	node := &CreateSectionNode{
-		BaseMenuNode: &model.BaseMenuNode{
-			ID:       "createSection",
-			Name:     "创建新章节",
-			Command:  "1",
-			Children: make(map[string]model.MenuNode),
-		},
-		service: service,
-	}
-
-	node.Handler = node.handleCreateSection
-	return node
-}
-
-// handleCreateSection 处理创建章节的逻辑
-func (n *CreateSectionNode) handleCreateSection(ctx *model.MenuContext) error {
-	for {
-		fmt.Print("请输入新章节名称: ")
-		var sectionName string
-		fmt.Scanln(&sectionName)
-
-		// 检查输入是否为空
-		if sectionName == "" {
-			fmt.Println("章节名称不能为空，请重新输入")
-			continue
-		}
-
-		// 创建章节请求
-		req := &model.CreateSectionRequest{
-			Name: sectionName,
-		}
-
-		// 调用service创建章节
-		err := n.service.CreateSection(req)
-		if err != nil {
-			// 如果是章节已存在的错误，允许用户重新输入
-			if fmt.Sprintf("%v", err) == fmt.Sprintf("章节 '%s' 已存在", sectionName) {
-				fmt.Printf("错误: %v\n", err)
-				fmt.Println("请输入不同的章节名称")
-				continue
-			}
-			// 其他错误直接返回
-			return fmt.Errorf("创建章节失败: %w", err)
-		}
-
-		// 创建成功，自动选择该章节并进入章节操作菜单
-		fmt.Printf("\n章节 '%s' 创建成功！\n", sectionName)
-
-		// 选择刚创建的章节
-		selectReq := &model.SelectSectionRequest{
-			SectionName: sectionName,
-		}
-
-		selectResp, err := n.service.SelectSection(selectReq)
-		if err != nil {
-			return fmt.Errorf("选择新创建的章节失败: %w", err)
-		}
-
-		if selectResp.IsSuccess {
-			fmt.Printf("已自动选择章节: %s\n", selectResp.Selected.Name)
-
-			// 创建一个临时的SelectSectionNode来复用章节操作菜单逻辑
-			selectNode := NewSelectSection(n.service)
-			return selectNode.showSectionMenu(ctx, &selectResp.Selected)
-		}
-
-		return nil
-	}
 }

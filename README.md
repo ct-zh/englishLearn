@@ -14,8 +14,9 @@ englishLearn/
 │   │   ├── commands/     # 各种命令实现
 │   │   ├── app.go        # CLI应用主体
 │   │   ├── builder.go    # 菜单树构建器
+│   │   ├── commands/     # 各种命令实现
+│   │   │   └── sections/ # 章节相关命令节点
 │   │   ├── interactive.go # 交互式引擎
-│   │   ├── nodes.go      # 节点定义
 │   │   └── resolver.go   # 命令解析器
 │   ├── logic/            # Logic层 - 业务逻辑
 │   │   └── sections/     # 章节相关业务逻辑
